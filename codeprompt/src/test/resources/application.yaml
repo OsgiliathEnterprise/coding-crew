@@ -1,0 +1,45 @@
+# LangChain4j Local LLM Configuration (LM Studio)
+# LM Studio exposes an OpenAI-compatible API on localhost:1234
+langchain4j:
+  ollama:
+    chat-model:
+      base-url: http://localhost:11434
+      model-name: granite4
+      log-requests: true
+      log-responses: true
+      timeout: 900s
+      supported-capabilities: response_format_json_schema
+      strict-json-schema: true
+    streaming-chat-model:
+      base-url: http://localhost:11434
+      model-name: granite4
+      log-requests: true
+      log-responses: true
+      timeout: 900s
+
+# Application Configuration
+spring:
+  profiles:
+    active: test
+  application:
+    name: codeprompt-framework
+  main:
+    banner-mode: off
+    web-application-type: none
+logging:
+  pattern:
+    console: "%d{yyyy-MM-dd HH:mm:ss.SSS} %-5level %logger{36} - %msg%n"
+  exception-conversion-word: "%wEx"
+# Log to stderr to avoid interfering with JSON-RPC on stdout
+  level:
+    root: INFO
+    net.osgiliath.erp.codeprompt: DEBUG
+
+# MCP Server Properties
+mcp:
+  server:
+    name: code-prompt-framework
+    version: 0.1.0
+    protocol-version: 2024-11-05
+    supported-protocol-versions:
+      - 2024-11-05

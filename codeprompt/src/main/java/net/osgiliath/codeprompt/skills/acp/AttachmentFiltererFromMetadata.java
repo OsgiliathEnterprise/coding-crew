@@ -11,7 +11,7 @@ import java.util.List;
 import static dev.langchain4j.service.spring.AiServiceWiringMode.EXPLICIT;
 import static net.osgiliath.codeprompt.configuration.LangChain4jConfig.TOOL_PROVIDER_NONE;
 
-@AiService(wiringMode = EXPLICIT, toolProvider = TOOL_PROVIDER_NONE, chatModel = "openAiChatModel")
+@AiService(wiringMode = EXPLICIT, toolProvider = TOOL_PROVIDER_NONE, chatModel = "primaryChatModel")
 public interface AttachmentFiltererFromMetadata {
      /**
      * Chat with the assistant using a simple string message.

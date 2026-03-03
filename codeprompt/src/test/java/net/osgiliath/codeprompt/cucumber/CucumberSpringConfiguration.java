@@ -1,7 +1,10 @@
 package net.osgiliath.codeprompt.cucumber;
 
 import com.agentclientprotocol.model.ContentBlock;
+import io.cucumber.java.AfterAll;
+import io.cucumber.java.BeforeAll;
 import io.cucumber.spring.CucumberContextConfiguration;
+import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.osgiliath.acplanggraphlangchainbridge.acp.AcpAgentSupportBridge;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.LangGraph4jAdapter;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.graph.PromptGraph;
@@ -9,8 +12,14 @@ import net.osgiliath.codeprompt.CodePromptFrameworkApplication;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.testcontainers.ollama.OllamaContainer;
+import org.testcontainers.utility.DockerImageName;
 
+import java.io.IOException;
+import java.time.Duration;
 import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 
@@ -21,7 +30,7 @@ import java.util.concurrent.CompletableFuture;
 @SpringBootTest(
     classes = CodePromptFrameworkApplication.class,
     properties = {
-        "spring.main.web-application-type=none"
+        "spring.profiles.active=test"
     }
 )
 public class CucumberSpringConfiguration {
@@ -86,6 +95,32 @@ public class CucumberSpringConfiguration {
     public LangGraph4jAdapter langChain4jAdapter(PromptGraph promptGraph) {
         return new LangGraph4jAdapter(promptGraph);
     }
+
+    static OllamaContainer ollamaContainer;
+    @BeforeAll
+    public static void before_all() throws IOException, InterruptedException {
+        System.setProperty("api.version", "1.44");
+        ollamaContainer = new OllamaContainer(
+            DockerImageName.parse("ollama/ollama")
+        ).withReuse(true);
+        ollamaContainer.start();
+        ollamaContainer.execInContainer("ollama", "pull", "granite4");
+    }
+
+    @AfterAll
+    public static void after_all() {
+        if (ollamaContainer != null) {
+            ollamaContainer.stop();
+        }
+    }
+
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("langchain4j.ollama.chat-model.base-url", () -> "http://" + ollamaContainer.getHost() + ":" + ollamaContainer.getMappedPort(11434));
+        registry.add("langchain4j.ollama.streaming-chat-model.base-url", () -> "http://" + ollamaContainer.getHost() + ":" + ollamaContainer.getMappedPort(11434));
+    }
+
+
 }
 
 

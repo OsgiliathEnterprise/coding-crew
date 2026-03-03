@@ -12,7 +12,7 @@ import static net.osgiliath.codeprompt.configuration.LangChain4jConfig.TOOL_PROV
  * Simple AI assistant interface powered by LangChain4j.
  * Spring Boot will automatically create an implementation of this interface.
  */
-@AiService(wiringMode = EXPLICIT, toolProvider = TOOL_PROVIDER_NONE, streamingChatModel = "openAiStreamingChatModel")
+@AiService(wiringMode = EXPLICIT, toolProvider = TOOL_PROVIDER_NONE, streamingChatModel = "primaryStreamingChatModel")
 public interface JavaSpringBootAssistant {
 
     /**

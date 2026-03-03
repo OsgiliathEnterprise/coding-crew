@@ -1,12 +1,17 @@
 package net.osgiliath.codeprompt.cucumber.steps;
 
+import io.cucumber.java.AfterAll;
+import io.cucumber.java.BeforeAll;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import net.osgiliath.acplanggraphlangchainbridge.acp.AcpAgentSupportBridge;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.LangGraph4jAdapter;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.testcontainers.ollama.OllamaContainer;
+import org.testcontainers.utility.DockerImageName;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -20,7 +25,6 @@ import static org.awaitility.Awaitility.await;
  * Step definitions for LangChain4j Adapter feature scenarios.
  */
 public class LangChain4jAdapterSteps {
-
     private final StringBuilder fullResponse = new StringBuilder();
     private final AtomicBoolean completed = new AtomicBoolean(false);
     private final AtomicReference<Throwable> error = new AtomicReference<>();

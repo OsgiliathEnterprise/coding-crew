@@ -4,14 +4,21 @@ import com.agentclientprotocol.model.ContentBlock;
 import net.osgiliath.acplanggraphlangchainbridge.acp.AcpAgentSupportBridge;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.LangGraph4jAdapter;
 import net.osgiliath.codeprompt.CodePromptFrameworkApplication;
+import org.junit.jupiter.api.AfterAll;
+import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.test.context.ActiveProfiles;
+import org.springframework.test.context.DynamicPropertyRegistry;
+import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
+import org.testcontainers.ollama.OllamaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.io.File;
+import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
@@ -28,13 +35,33 @@ import static org.awaitility.Awaitility.await;
 })
 @ActiveProfiles("test")
 public class LangChain4jAdapterIT {
-
     @Autowired
     private LangGraph4jAdapter adapter;
 
     // Mock CommandLineRunners to prevent them from starting and blocking stdin
     @MockitoBean
     private CommandLineRunner commandLineRunner;
+    static OllamaContainer ollamaContainer;
+    @BeforeAll
+    public static void before_all() throws IOException, InterruptedException {
+        System.setProperty("api.version", "1.44");
+        ollamaContainer = new OllamaContainer(
+            DockerImageName.parse("ollama/ollama")
+        ).withReuse(true);
+        ollamaContainer.start();
+        ollamaContainer.execInContainer("ollama", "pull", "granite4");
+    }
+    @DynamicPropertySource
+    static void setProperties(DynamicPropertyRegistry registry) {
+        registry.add("langchain4j.ollama.chat-model.base-url", () -> "http://" + ollamaContainer.getHost() + ":" + ollamaContainer.getMappedPort(11434));
+        registry.add("langchain4j.ollama.streaming-chat-model.base-url", () -> "http://" + ollamaContainer.getHost() + ":" + ollamaContainer.getMappedPort(11434));
+    }
+    @AfterAll
+    public static void after_all() {
+        if (ollamaContainer != null) {
+            ollamaContainer.stop();
+        }
+    }
 
     @Test
     void contextLoads() {

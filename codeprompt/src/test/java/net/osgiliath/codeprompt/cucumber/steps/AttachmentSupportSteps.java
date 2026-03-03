@@ -1,15 +1,20 @@
 package net.osgiliath.codeprompt.cucumber.steps;
 
 import com.agentclientprotocol.model.ContentBlock;
+import io.cucumber.java.AfterAll;
 import io.cucumber.java.Before;
+import io.cucumber.java.BeforeAll;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
 import net.osgiliath.acplanggraphlangchainbridge.acp.AcpAgentSupportBridge;
 import net.osgiliath.codeprompt.skills.java.JavaSpringBootAssistant;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.testcontainers.ollama.OllamaContainer;
+import org.testcontainers.utility.DockerImageName;
 
 import java.io.File;
+import java.io.IOException;
 import java.net.URI;
 import java.net.URL;
 import java.util.ArrayList;
@@ -29,6 +34,7 @@ import static org.awaitility.Awaitility.await;
  * Implements real test logic for attachment handling in ACP and LangChain4j.
  */
 public class AttachmentSupportSteps {
+
 @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired(required = false)
     private JavaSpringBootAssistant javaSpringBootAssistant;
