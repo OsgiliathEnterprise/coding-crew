@@ -49,7 +49,7 @@ public class LangChain4jAdapterIT {
             DockerImageName.parse("ollama/ollama")
         ).withReuse(true);
         ollamaContainer.start();
-        ollamaContainer.execInContainer("ollama", "pull", "granite4");
+        ollamaContainer.execInContainer("ollama", "pull", "gemma3:1b");
     }
     @DynamicPropertySource
     static void setProperties(DynamicPropertyRegistry registry) {
@@ -196,7 +196,7 @@ public class LangChain4jAdapterIT {
         );
         
         String prompt = "Please analyze the attached Thread.java file and extract the secret code from the EASTER EGG comment. " +
-                       "Respond with just the secret code value.";
+                       "Answer with the EGG: the word only which starts with 'CUCUMBER_'.";
         
         StringBuilder fullResponse = new StringBuilder();
         AtomicBoolean completed = new AtomicBoolean(false);

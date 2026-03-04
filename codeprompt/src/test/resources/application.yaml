@@ -4,7 +4,7 @@ langchain4j:
   ollama:
     chat-model:
       base-url: http://localhost:11434
-      model-name: granite4
+      model-name: gemma3:1b
       log-requests: true
       log-responses: true
       timeout: 900s
@@ -12,7 +12,7 @@ langchain4j:
       strict-json-schema: true
     streaming-chat-model:
       base-url: http://localhost:11434
-      model-name: granite4
+      model-name: gemma3:1b
       log-requests: true
       log-responses: true
       timeout: 900s

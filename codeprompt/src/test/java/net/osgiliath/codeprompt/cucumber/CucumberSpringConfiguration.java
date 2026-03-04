@@ -104,7 +104,7 @@ public class CucumberSpringConfiguration {
             DockerImageName.parse("ollama/ollama")
         ).withReuse(true);
         ollamaContainer.start();
-        ollamaContainer.execInContainer("ollama", "pull", "granite4");
+        ollamaContainer.execInContainer("ollama", "pull", "gemma3:1b");
     }
 
     @AfterAll
