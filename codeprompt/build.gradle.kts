@@ -104,8 +104,9 @@ dependencies {
     testImplementation("io.cucumber:cucumber-spring")
     testImplementation("io.cucumber:cucumber-junit-platform-engine")
     testImplementation("org.junit.platform:junit-platform-suite")
-    testImplementation("org.testcontainers:testcontainers-ollama:2.0.2")
-    testImplementation("dev.langchain4j:langchain4j-ollama-spring-boot-starter")
+    // testImplementation("org.testcontainers:testcontainers-ollama:2.0.2")
+    // testImplementation("dev.langchain4j:langchain4j-ollama-spring-boot-starter")
+    testImplementation("dev.langchain4j:langchain4j-open-ai-official")
 }
 
 tasks.withType<Jar> {

@@ -1,31 +1,41 @@
 package net.osgiliath.codeprompt.langchain4j;
 
 import com.agentclientprotocol.model.ContentBlock;
+import com.openai.models.ChatModel;
+import dev.langchain4j.model.chat.Capability;
+import dev.langchain4j.model.openaiofficial.OpenAiOfficialChatModel;
+import dev.langchain4j.model.openaiofficial.OpenAiOfficialStreamingChatModel;
 import net.osgiliath.acplanggraphlangchainbridge.acp.AcpAgentSupportBridge;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.LangGraph4jAdapter;
 import net.osgiliath.codeprompt.CodePromptFrameworkApplication;
+import net.osgiliath.codeprompt.configuration.ChatModelConfiguration;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.context.SpringBootTest;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.testcontainers.ollama.OllamaContainer;
+/*import org.testcontainers.ollama.OllamaContainer;
 import org.testcontainers.utility.DockerImageName;
-
+*/
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.awaitility.Awaitility.await;
@@ -33,6 +43,7 @@ import static org.awaitility.Awaitility.await;
 @SpringBootTest(classes = CodePromptFrameworkApplication.class, properties = {
     "spring.main.web-application-type=none"
 })
+@Import(ChatModelConfiguration.class)
 @ActiveProfiles("test")
 public class LangChain4jAdapterIT {
     @Autowired
@@ -41,6 +52,8 @@ public class LangChain4jAdapterIT {
     // Mock CommandLineRunners to prevent them from starting and blocking stdin
     @MockitoBean
     private CommandLineRunner commandLineRunner;
+
+    /*
     static OllamaContainer ollamaContainer;
     @BeforeAll
     public static void before_all() throws IOException, InterruptedException {
@@ -62,7 +75,7 @@ public class LangChain4jAdapterIT {
             ollamaContainer.stop();
         }
     }
-
+*/
     @Test
     void contextLoads() {
         assertThat(adapter).isNotNull();
@@ -185,7 +198,7 @@ public class LangChain4jAdapterIT {
         assertThat(threadJavaFile).exists();
         
         ContentBlock.ResourceLink threadJavaLink = new ContentBlock.ResourceLink(
-            "Thread.ajava",
+            "Thread.java",
             "file://" + threadJavaPath,
             "Mock Thread.java class from test dataset",
             "text/java",

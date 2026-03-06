@@ -10,9 +10,6 @@ import io.cucumber.java.en.When;
 import net.osgiliath.acplanggraphlangchainbridge.acp.AcpAgentSupportBridge;
 import net.osgiliath.codeprompt.skills.java.JavaSpringBootAssistant;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.testcontainers.ollama.OllamaContainer;
-import org.testcontainers.utility.DockerImageName;
-
 import java.io.File;
 import java.io.IOException;
 import java.net.URI;
@@ -24,6 +21,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
+import static dev.langchain4j.model.openai.OpenAiChatModelName.GPT_5_MINI;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.fail;
@@ -76,6 +74,7 @@ public class AttachmentSupportSteps {
 
     @Given("an active ACP session")
     public void an_active_acp_session() {
+
         // Initialize an active ACP session for attachment testing
         try {
             assertThat(acpBridge).isNotNull();

@@ -1,6 +1,10 @@
 package net.osgiliath.codeprompt.cucumber;
 
 import com.agentclientprotocol.model.ContentBlock;
+import com.openai.models.ChatModel;
+import dev.langchain4j.model.chat.Capability;
+import dev.langchain4j.model.openaiofficial.OpenAiOfficialChatModel;
+import dev.langchain4j.model.openaiofficial.OpenAiOfficialStreamingChatModel;
 import io.cucumber.java.AfterAll;
 import io.cucumber.java.BeforeAll;
 import io.cucumber.spring.CucumberContextConfiguration;
@@ -9,26 +13,32 @@ import net.osgiliath.acplanggraphlangchainbridge.acp.AcpAgentSupportBridge;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.LangGraph4jAdapter;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.graph.PromptGraph;
 import net.osgiliath.codeprompt.CodePromptFrameworkApplication;
+import net.osgiliath.codeprompt.configuration.ChatModelConfiguration;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Import;
 import org.springframework.test.context.DynamicPropertyRegistry;
 import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.testcontainers.ollama.OllamaContainer;
+/*import org.testcontainers.ollama.OllamaContainer;
 import org.testcontainers.utility.DockerImageName;
-
+*/
 import java.io.IOException;
 import java.time.Duration;
+import java.util.HashSet;
 import java.util.Map;
+import java.util.Set;
 import java.util.concurrent.CompletableFuture;
+
+import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
 
 /**
  * Cucumber Spring configuration that sets up the Spring Boot context for BDD tests.
  */
 @CucumberContextConfiguration
 @SpringBootTest(
-    classes = CodePromptFrameworkApplication.class,
+    classes = { ChatModelConfiguration.class, CodePromptFrameworkApplication.class},
     properties = {
         "spring.profiles.active=test"
     }
@@ -96,6 +106,7 @@ public class CucumberSpringConfiguration {
         return new LangGraph4jAdapter(promptGraph);
     }
 
+/*
     static OllamaContainer ollamaContainer;
     @BeforeAll
     public static void before_all() throws IOException, InterruptedException {
@@ -119,6 +130,7 @@ public class CucumberSpringConfiguration {
         registry.add("langchain4j.ollama.chat-model.base-url", () -> "http://" + ollamaContainer.getHost() + ":" + ollamaContainer.getMappedPort(11434));
         registry.add("langchain4j.ollama.streaming-chat-model.base-url", () -> "http://" + ollamaContainer.getHost() + ":" + ollamaContainer.getMappedPort(11434));
     }
-}
+    */
+ }
 
 

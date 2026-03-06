@@ -5,6 +5,7 @@ import dev.langchain4j.model.chat.StreamingChatModel;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Profile;
 
 /**
  * Configuration that exports the auto-configured ChatModel beans with explicit names
@@ -14,6 +15,7 @@ import org.springframework.context.annotation.Configuration;
  * while maintaining explicit control over tool providers.
  */
 @Configuration
+@Profile("!test")
 public class ChatModelConfiguration {
 
     /**
