@@ -59,7 +59,7 @@ configurations.all {
 
 dependencies {
     // ACP LangGraph LangChain Bridge (published to local Maven)
-    implementation("net.osgiliath.prompt:acp-langraph-langchain-bridge:1.0-SNAPSHOT")
+    implementation("net.osgiliath.ai:acp-langraph-langchain-bridge:1.0.9")
     // Official ACP Kotlin SDK from JetBrains
     // Provides built-in protocol handling, STDIO transport, and session management
     implementation("com.agentclientprotocol:acp:0.15.3")
