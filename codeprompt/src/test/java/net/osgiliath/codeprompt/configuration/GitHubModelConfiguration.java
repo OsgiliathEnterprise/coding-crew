@@ -1,4 +1,4 @@
-package net.osgiliath.codeprompttests.configuration;
+package net.osgiliath.codeprompt.configuration;
 
 
 import com.openai.models.ChatModel;
@@ -10,6 +10,7 @@ import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 
 import java.util.HashSet;
@@ -18,16 +19,17 @@ import java.util.Set;
 import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
 
 /**
- * Optional test-only configuration for GitHub Models runs.
+ * Configuration for GitHub Models when the 'github' profile is active.
  *
- * Kept out of the production package namespace to avoid overriding
- * the main ChatModelConfiguration during default local tests.
+ * Provides custom OpenAI Official API beans configured for GitHub Models
+ * with strict tool support.
  */
 @TestConfiguration
 @Profile("github")
-public class ChatModelConfiguration {
+public class GitHubModelConfiguration {
 
     @Bean("primaryChatModel")
+    @Primary
     public OpenAiOfficialChatModel model() {
         Set<Capability> capabilities = new HashSet<>();
         capabilities.add(RESPONSE_FORMAT_JSON_SCHEMA);
@@ -42,6 +44,7 @@ public class ChatModelConfiguration {
         .build();
     }
     @Bean("primaryStreamingChatModel")
+    @Primary
     public OpenAiOfficialStreamingChatModel streamingModel() {
         return OpenAiOfficialStreamingChatModel.builder()
                 .baseUrl("https://models.inference.ai.azure.com")
@@ -52,3 +55,4 @@ public class ChatModelConfiguration {
         .build();
     }
 }
+

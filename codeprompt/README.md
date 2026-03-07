@@ -175,14 +175,15 @@ langchain4j:
 ```
 
 **GitHub Actions automatically:**
-- Activates the `github` profile with `-Dspring.profiles.active=github`
+- Activates the `github` profile via `SPRING_PROFILES_ACTIVE=github` environment variable
 - Uses the `MODEL_TOKEN` secret for authentication
 - No manual setup required
 
 **To test with GitHub models locally:**
 ```bash
 export MODEL_TOKEN=your-github-token
-./gradlew test -Dspring.profiles.active=github
+export SPRING_PROFILES_ACTIVE=github
+./gradlew test
 ```
 
 ### Profile Selection
@@ -201,10 +202,11 @@ The framework uses Spring profiles to switch between configurations:
 ./gradlew test
 
 # Local with GitHub Models
-./gradlew test -Dspring.profiles.active=github
+export SPRING_PROFILES_ACTIVE=github
+./gradlew test
 
-# CI (automatically set)
-# -Dspring.profiles.active=github is set in ci.yml
+# CI (automatically set via environment variable)
+# SPRING_PROFILES_ACTIVE=github is set in ci.yml
 ```
 
 ### Secrets Configuration

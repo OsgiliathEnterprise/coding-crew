@@ -15,7 +15,7 @@ import org.springframework.context.annotation.Profile;
  * while maintaining explicit control over tool providers.
  */
 @Configuration
-@Profile("!test")
+@Profile("!github")
 public class ChatModelConfiguration {
 
     /**
