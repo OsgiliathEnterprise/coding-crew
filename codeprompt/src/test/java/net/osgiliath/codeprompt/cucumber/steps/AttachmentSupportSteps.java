@@ -279,7 +279,7 @@ public class AttachmentSupportSteps {
             };
 
             // Stream the prompt with ResourceLinks
-            String promptToUse = (currentPrompt != null) ? currentPrompt : "Tell me about the attached resource";
+            String promptToUse = (currentPrompt != null) ? currentPrompt : "Please analyze the attached file. If you consider the attachment content in your analysis, you must include the phrase 'attachment considered' in your response. If you do find 'EASTER EGG: ' in the text, please also include the secret code in your response.";
             sessionBridge.streamPrompt(promptToUse, currentResourceLinks, consumer);
             await().atMost(40, SECONDS).untilTrue(completed);
 

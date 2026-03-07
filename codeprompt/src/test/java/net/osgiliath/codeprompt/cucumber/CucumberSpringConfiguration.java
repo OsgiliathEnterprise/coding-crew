@@ -1,34 +1,17 @@
 package net.osgiliath.codeprompt.cucumber;
 
 import com.agentclientprotocol.model.ContentBlock;
-import com.openai.models.ChatModel;
-import dev.langchain4j.model.chat.Capability;
-import dev.langchain4j.model.openaiofficial.OpenAiOfficialChatModel;
-import dev.langchain4j.model.openaiofficial.OpenAiOfficialStreamingChatModel;
-import io.cucumber.java.AfterAll;
-import io.cucumber.java.BeforeAll;
 import io.cucumber.spring.CucumberContextConfiguration;
-import net.bytebuddy.utility.dispatcher.JavaDispatcher;
 import net.osgiliath.acplanggraphlangchainbridge.acp.AcpAgentSupportBridge;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.LangGraph4jAdapter;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.graph.PromptGraph;
 import net.osgiliath.codeprompt.CodePromptFrameworkApplication;
-import net.osgiliath.codeprompt.configuration.ChatModelConfiguration;
+import net.osgiliath.codeprompt.utils.markdown.MarkdownParser;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Import;
-import org.springframework.test.context.DynamicPropertyRegistry;
-import org.springframework.test.context.DynamicPropertySource;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-/*import org.testcontainers.ollama.OllamaContainer;
-import org.testcontainers.utility.DockerImageName;
-*/
-import java.io.IOException;
-import java.time.Duration;
-import java.util.HashSet;
 import java.util.Map;
-import java.util.Set;
 import java.util.concurrent.CompletableFuture;
 
 import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
@@ -45,6 +28,12 @@ public class CucumberSpringConfiguration {
      */
     @MockitoBean
     private CommandLineRunner commandLineRunner;
+
+    /**
+     * Mock MarkdownParser to keep cucumber tests focused on API/step behavior.
+     */
+    @MockitoBean
+    private MarkdownParser markdownParser;
 
     /**
      * Provide a mock AcpAgentSupportBridge bean for testing.

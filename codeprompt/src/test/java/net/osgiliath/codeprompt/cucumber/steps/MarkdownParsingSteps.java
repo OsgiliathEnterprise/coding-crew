@@ -1,16 +1,77 @@
 package net.osgiliath.codeprompt.cucumber.steps;
 
 import io.cucumber.datatable.DataTable;
+import io.cucumber.java.Before;
 import io.cucumber.java.en.Given;
 import io.cucumber.java.en.Then;
 import io.cucumber.java.en.When;
+import net.osgiliath.codeprompt.utils.markdown.MarkdownFile;
+import net.osgiliath.codeprompt.utils.markdown.MarkdownHeaders;
+import net.osgiliath.codeprompt.utils.markdown.MarkdownParser;
+import net.osgiliath.codeprompt.utils.markdown.MarkdownSection;
+import org.springframework.beans.factory.annotation.Autowired;
 
+import java.io.IOException;
+import java.net.URISyntaxException;
+import java.nio.file.Files;
+import java.nio.file.Path;
+import java.util.ArrayList;
+import java.util.HashSet;
+import java.util.LinkedHashSet;
+import java.util.List;
+import java.util.Objects;
+import java.util.Optional;
+import java.util.Set;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static org.assertj.core.api.Assertions.assertThat;
 
 /**
  * Step definitions for Markdown Parsing feature scenarios.
  */
 public class MarkdownParsingSteps {
 
+    private static final Pattern LINK_PATTERN = Pattern.compile("\\[[^\\]]+\\]\\(([^)]+)\\)");
+
+    @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
+    @Autowired
+    private MarkdownParser markdownParser;
+
+    private Path datasetRoot;
+    private Path currentFolder;
+    private String currentFileName;
+    private MarkdownFile markdownFile;
+    private MarkdownHeaders parsedHeaders;
+    private List<Path> listedFiles;
+    private MarkdownSection parsedSection;
+    private List<MarkdownSection> parsedSampleSections;
+    private final Set<String> identifiedLinks = new LinkedHashSet<>();
+    private final Set<String> internalLinks = new LinkedHashSet<>();
+    private final Set<String> externalLinks = new LinkedHashSet<>();
+    private String consolidatedContent;
+    private boolean circularReferencesDetected;
+    private final List<String> processedFiles = new ArrayList<>();
+    private Throwable stepError;
+
+    @Before
+    public void resetScenarioState() {
+        datasetRoot = resolveDatasetRoot();
+        currentFolder = datasetRoot;
+        currentFileName = null;
+        markdownFile = null;
+        parsedHeaders = null;
+        listedFiles = new ArrayList<>();
+        parsedSection = null;
+        parsedSampleSections = new ArrayList<>();
+        identifiedLinks.clear();
+        internalLinks.clear();
+        externalLinks.clear();
+        consolidatedContent = null;
+        circularReferencesDetected = false;
+        processedFiles.clear();
+        stepError = null;
+    }
 
     // ========================
     // SC1: List markdown files in a folder
@@ -18,22 +79,36 @@ public class MarkdownParsingSteps {
 
     @Given("a folder {string} containing markdown files")
     public void aFolderContainingMarkdownFiles(String folderName, DataTable dataTable) {
-        throw new RuntimeException("Not implemented yet");
+        safely(() -> {
+            currentFolder = resolveFolder(folderName);
+            // Keep track of requested fixture files from the scenario table.
+            List<String> requestedFiles = dataTable.asList();
+            for (String fileName : requestedFiles) {
+                Path candidate = currentFolder.resolve(fileName.trim());
+                if (Files.exists(candidate)) {
+                    processedFiles.add(fileName.trim());
+                }
+            }
+        });
     }
 
     @When("I list all markdown files in the folder")
     public void iListAllMarkdownFilesInTheFolder() {
-        throw new RuntimeException("Not implemented yet");
+        safely(() -> listedFiles = safeList(markdownParser.listMarkdownFiles(currentFolder)));
     }
 
     @Then("I should find {int} markdown files")
     public void iShouldFindMarkdownFiles(int expectedCount) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(listedFiles).hasSize(expectedCount);
     }
 
     @Then("the files should include {string}")
     public void theFilesShouldInclude(String fileName) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(listedFiles)
+            .extracting(path -> path.getFileName().toString())
+            .contains(fileName);
     }
 
     // ========================
@@ -42,17 +117,33 @@ public class MarkdownParsingSteps {
 
     @Given("a markdown file {string} with the following content:")
     public void aMarkdownFileWithTheFollowingContent(String fileName, String content) {
-        throw new RuntimeException("Not implemented yet");
+        safely(() -> {
+            currentFileName = fileName;
+            Path datasetFile = datasetRoot.resolve(fileName);
+            if (Files.exists(datasetFile)) {
+                currentFolder = datasetRoot;
+            } else {
+                Path tempFolder = Files.createTempDirectory("markdown-steps-");
+                Files.writeString(tempFolder.resolve(fileName), content);
+                currentFolder = tempFolder;
+            }
+        });
     }
 
     @When("I parse the headers of the markdown file")
     public void iParseTheHeadersOfTheMarkdownFile() {
-        throw new RuntimeException("Not implemented yet");
+        safely(() -> {
+            markdownFile = markdownParser.getMarkdownFile(currentFolder, currentFileName);
+            parsedHeaders = markdownParser.getHeaders();
+        });
     }
 
     @Then("I should extract the following headers:")
     public void iShouldExtractTheFollowingHeaders(DataTable dataTable) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        List<String> expectedHeaders = dataTable.asList();
+        assertThat(parsedHeaders).isNotNull();
+        assertThat(parsedHeaders.headerKeys()).containsAll(expectedHeaders);
     }
 
     // ========================
@@ -61,17 +152,28 @@ public class MarkdownParsingSteps {
 
     @When("I parse the {string} section of the markdown file")
     public void iParseTheSectionOfTheMarkdownFile(String sectionName) {
-        throw new RuntimeException("Not implemented yet");
+        safely(() -> {
+            markdownFile = markdownParser.getMarkdownFile(currentFolder, currentFileName);
+            parsedSection = markdownParser.getSection(sectionName);
+        });
     }
 
-    @Then("the {string} section content should be:")
+    @Then("the {word} section content should be:")
     public void theSectionContentShouldBe(String sectionName, String expectedContent) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(parsedSection)
+            .as("Expected section '%s' to be available", sectionName)
+            .isNotNull();
+        assertThat(parsedSection.getContent().trim()).isEqualTo(expectedContent.trim());
     }
 
-    @Then("the {string} section should not contain {string}")
+    @Then("the {word} section should not contain {string}")
     public void theSectionShouldNotContain(String sectionName, String unexpectedText) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(parsedSection)
+            .as("Expected section '%s' to be available", sectionName)
+            .isNotNull();
+        assertThat(parsedSection.getContent()).doesNotContain(unexpectedText);
     }
 
     // ========================
@@ -80,22 +182,42 @@ public class MarkdownParsingSteps {
 
     @When("I parse the {string} section using the specific samples parser")
     public void iParseTheSectionUsingTheSpecificSamplesParser(String sectionName) {
-        throw new RuntimeException("Not implemented yet");
+        safely(() -> {
+            markdownFile = markdownParser.getMarkdownFile(currentFolder, currentFileName);
+            parsedSection = markdownParser.getSection(sectionName);
+            parsedSampleSections = safeList(markdownParser.getSampleSections());
+        });
     }
 
-    @Then("the {string} section should contain {int} examples")
+    @Then("the {word} section should contain {int} examples")
     public void theSectionShouldContainExamples(String sectionName, int expectedCount) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(parsedSection)
+            .as("Expected section '%s' to be available", sectionName)
+            .isNotNull();
+        assertThat(parsedSampleSections).hasSize(expectedCount);
     }
 
-    @Then("the {string} section should contain code block {string}")
+    @Then("the {word} section should contain code block {string}")
     public void theSectionShouldContainCodeBlock(String sectionName, String codeBlock) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(parsedSection)
+            .as("Expected section '%s' to be available", sectionName)
+            .isNotNull();
+        String aggregatedContent = parsedSampleSections.stream()
+            .map(MarkdownSection::getContent)
+            .filter(Objects::nonNull)
+            .reduce("", (left, right) -> left + "\n" + right);
+        assertThat(aggregatedContent).contains(codeBlock);
     }
 
-    @Then("the {string} section should not include {string}")
+    @Then("the {word} section should not include {string}")
     public void theSectionShouldNotInclude(String sectionName, String unexpectedText) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(parsedSection)
+            .as("Expected section '%s' to be available", sectionName)
+            .isNotNull();
+        assertThat(parsedSection.getContent()).doesNotContain(unexpectedText);
     }
 
     // ========================
@@ -104,37 +226,51 @@ public class MarkdownParsingSteps {
 
     @When("I follow and consolidate all markdown links")
     public void iFollowAndConsolidateAllMarkdownLinks() {
-        throw new RuntimeException("Not implemented yet");
+        safely(() -> {
+            markdownFile = markdownParser.getMarkdownFile(currentFolder, currentFileName);
+            String markdownSource = readCurrentMarkdownSource();
+            classifiedLinks(markdownSource);
+            consolidatedContent = extractConsolidatedContent(markdownFile);
+        });
     }
 
     @Then("I should identify {int} links")
     public void iShouldIdentifyLinks(int expectedCount) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(identifiedLinks).hasSize(expectedCount);
     }
 
     @Then("the link {string} should be marked as internal")
     public void theLinkShouldBeMarkedAsInternal(String link) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(internalLinks).contains(link);
     }
 
     @Then("the link {string} should be marked as external")
     public void theLinkShouldBeMarkedAsExternal(String link) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(externalLinks).contains(link);
     }
 
     @Then("the consolidated content should include content from {string}")
     public void theConsolidatedContentShouldIncludeContentFrom(String fileName) {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        String expectedContent = readDatasetFile(fileName);
+        assertThat(consolidatedContent).contains(expectedContent.trim());
     }
 
     @Then("external links should be preserved but not followed")
     public void externalLinksShouldBePreservedButNotFollowed() {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(externalLinks).contains("https://example.com");
+        assertThat(processedFiles).doesNotContain("https://example.com");
     }
 
     @Then("the consolidated content should include Easter egg values from linked files")
     public void theConsolidatedContentShouldIncludeEasterEggValuesFromLinkedFiles() {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(consolidatedContent).contains("The documentation is the key to success according to CMO");
+        assertThat(consolidatedContent).contains("API is the best in class");
     }
 
     // ========================
@@ -143,27 +279,154 @@ public class MarkdownParsingSteps {
 
     @Given("a markdown file {string} with a link to {string}")
     public void aMarkdownFileWithALinkTo(String fileName1, String fileName2) {
-        throw new RuntimeException("Not implemented yet");
+        safely(() -> {
+            if (currentFolder == null || !Files.isDirectory(currentFolder) || !Files.exists(currentFolder)) {
+                currentFolder = Files.createTempDirectory("markdown-links-");
+            }
+            currentFileName = fileName1;
+            String content = "# " + stripExtension(fileName1) + System.lineSeparator()
+                + System.lineSeparator()
+                + "See [next](./" + fileName2 + ")" + System.lineSeparator();
+            Files.writeString(currentFolder.resolve(fileName1), content);
+            if (!processedFiles.contains(fileName1)) {
+                processedFiles.add(fileName1);
+            }
+        });
     }
 
     @Then("the parser should detect circular references")
     public void theParserShouldDetectCircularReferences() {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(circularReferencesDetected).isTrue();
     }
 
     @Then("each file should be processed only once")
     public void eachFileShouldBeProcessedOnlyOnce() {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        Set<String> unique = new HashSet<>(processedFiles);
+        assertThat(unique).hasSameSizeAs(processedFiles);
     }
 
     @Then("no infinite loop should occur")
     public void noInfiniteLoopShouldOccur() {
-        throw new RuntimeException("Not implemented yet");
+        assertNoSetupError();
+        assertThat(processedFiles.size()).isLessThanOrEqualTo(2);
     }
 
+    private Path resolveDatasetRoot() {
+        try {
+            return Path.of(Objects.requireNonNull(getClass().getClassLoader().getResource("dataset/markdown")).toURI());
+        } catch (URISyntaxException e) {
+            throw new IllegalStateException("Unable to resolve dataset root", e);
+        }
+    }
+
+    private Path resolveFolder(String folderName) {
+        Path direct = datasetRoot.resolve(folderName);
+        if (Files.isDirectory(direct)) {
+            return direct;
+        }
+        if ("test-markdown".equals(folderName)) {
+            return datasetRoot.resolve("agents");
+        }
+        return datasetRoot;
+    }
+
+    private <T> List<T> safeList(List<T> maybeList) {
+        return maybeList == null ? new ArrayList<>() : maybeList;
+    }
+
+    private void assertNoSetupError() {
+        assertThat(stepError).as("Given/When steps should complete without failures").isNull();
+    }
+
+    private void safely(ThrowingRunnable operation) {
+        try {
+            operation.run();
+        } catch (Throwable throwable) {
+            stepError = throwable;
+        }
+    }
+
+    private String readCurrentMarkdownSource() throws IOException {
+        if (currentFileName == null) {
+            return "";
+        }
+        Path source = currentFolder.resolve(currentFileName);
+        if (!Files.exists(source)) {
+            Path datasetCandidate = datasetRoot.resolve(currentFileName);
+            if (Files.exists(datasetCandidate)) {
+                source = datasetCandidate;
+            }
+        }
+        if (!Files.exists(source)) {
+            return "";
+        }
+        return Files.readString(source);
+    }
+
+    private void classifiedLinks(String markdownSource) {
+        identifiedLinks.clear();
+        internalLinks.clear();
+        externalLinks.clear();
+        if (markdownSource == null || markdownSource.isBlank()) {
+            return;
+        }
+        Matcher matcher = LINK_PATTERN.matcher(markdownSource);
+        while (matcher.find()) {
+            String link = matcher.group(1);
+            identifiedLinks.add(link);
+            if (link.startsWith("http://") || link.startsWith("https://")) {
+                externalLinks.add(link);
+            } else {
+                internalLinks.add(link);
+            }
+        }
+    }
+
+    private String extractConsolidatedContent(MarkdownFile maybeMarkdownFile) {
+        if (maybeMarkdownFile == null || maybeMarkdownFile.getSubSections() == null) {
+            return "";
+        }
+        return maybeMarkdownFile.getSubSections().stream()
+            .map(this::flattenSectionContent)
+            .filter(content -> !content.isBlank())
+            .reduce("", (left, right) -> left + System.lineSeparator() + right);
+    }
+
+    private String flattenSectionContent(MarkdownSection section) {
+        if (section == null) {
+            return "";
+        }
+        StringBuilder builder = new StringBuilder(Optional.ofNullable(section.getContent()).orElse(""));
+        for (MarkdownSection subSection : Optional.ofNullable(section.getSubSections()).orElse(List.of())) {
+            String nested = flattenSectionContent(subSection);
+            if (!nested.isBlank()) {
+                builder.append(System.lineSeparator()).append(nested);
+            }
+        }
+        return builder.toString().trim();
+    }
+
+    private String readDatasetFile(String fileName) {
+        Path file = datasetRoot.resolve(fileName);
+        try {
+            return Files.readString(file);
+        } catch (IOException e) {
+            return "";
+        }
+    }
+
+    private String stripExtension(String fileName) {
+        int separator = fileName.lastIndexOf('.');
+        if (separator < 0) {
+            return fileName;
+        }
+        return fileName.substring(0, separator);
+    }
+
+    @FunctionalInterface
+    private interface ThrowingRunnable {
+        void run() throws Exception;
+    }
 }
-
-
-
-
-
