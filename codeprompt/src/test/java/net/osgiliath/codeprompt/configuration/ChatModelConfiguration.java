@@ -1,4 +1,4 @@
-package net.osgiliath.codeprompt.configuration;
+package net.osgiliath.codeprompttests.configuration;
 
 
 import com.openai.models.ChatModel;
@@ -18,14 +18,13 @@ import java.util.Set;
 import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
 
 /**
- * Configuration that exports the auto-configured ChatModel beans with explicit names
- * for use with @AiService EXPLICIT wiring mode.
+ * Optional test-only configuration for GitHub Models runs.
  *
- * This allows the application to use different models in different profiles (e.g., OpenAI for production, Ollama for tests)
- * while maintaining explicit control over tool providers.
+ * Kept out of the production package namespace to avoid overriding
+ * the main ChatModelConfiguration during default local tests.
  */
 @TestConfiguration
-@Profile("test")
+@Profile("github")
 public class ChatModelConfiguration {
 
     @Bean("primaryChatModel")
@@ -53,5 +52,3 @@ public class ChatModelConfiguration {
         .build();
     }
 }
-
-

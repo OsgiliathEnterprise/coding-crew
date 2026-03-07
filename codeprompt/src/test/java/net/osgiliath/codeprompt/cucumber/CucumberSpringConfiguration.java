@@ -37,12 +37,7 @@ import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
  * Cucumber Spring configuration that sets up the Spring Boot context for BDD tests.
  */
 @CucumberContextConfiguration
-@SpringBootTest(
-    classes = { ChatModelConfiguration.class, CodePromptFrameworkApplication.class},
-    properties = {
-        "spring.profiles.active=test"
-    }
-)
+@SpringBootTest(classes = {CodePromptFrameworkApplication.class})
 public class CucumberSpringConfiguration {
 
     /**
@@ -132,5 +127,3 @@ public class CucumberSpringConfiguration {
     }
     */
  }
-
-

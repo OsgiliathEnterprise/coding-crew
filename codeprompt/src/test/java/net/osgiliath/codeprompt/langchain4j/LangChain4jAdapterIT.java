@@ -1,14 +1,12 @@
 package net.osgiliath.codeprompt.langchain4j;
 
 import com.agentclientprotocol.model.ContentBlock;
-import com.openai.models.ChatModel;
 import dev.langchain4j.model.chat.Capability;
 import dev.langchain4j.model.openaiofficial.OpenAiOfficialChatModel;
 import dev.langchain4j.model.openaiofficial.OpenAiOfficialStreamingChatModel;
 import net.osgiliath.acplanggraphlangchainbridge.acp.AcpAgentSupportBridge;
 import net.osgiliath.acplanggraphlangchainbridge.langgraph.LangGraph4jAdapter;
 import net.osgiliath.codeprompt.CodePromptFrameworkApplication;
-import net.osgiliath.codeprompt.configuration.ChatModelConfiguration;
 import org.junit.jupiter.api.AfterAll;
 import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
@@ -43,8 +41,6 @@ import static org.awaitility.Awaitility.await;
 @SpringBootTest(classes = CodePromptFrameworkApplication.class, properties = {
     "spring.main.web-application-type=none"
 })
-@Import(ChatModelConfiguration.class)
-@ActiveProfiles("test")
 public class LangChain4jAdapterIT {
     @Autowired
     private LangGraph4jAdapter adapter;

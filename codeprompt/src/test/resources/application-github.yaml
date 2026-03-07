@@ -1,29 +1,31 @@
 # LangChain4j Local LLM Configuration (LM Studio)
 # LM Studio exposes an OpenAI-compatible API on localhost:1234
-langchain4j:
-  open-ai:
-    chat-model:
-      base-url: http://127.0.0.1:1234/v1
-      model-name: ibm/granite-4-h-tiny
-      log-requests: true
-      log-responses: true
-      timeout: 20s
-      api-key: sk-lm-4LjIq0cR:VIueSQJU4lohBUvy7LUu
-      supported-capabilities: response_format_json_schema
-      strict-json-schema: true
-    streaming-chat-model:
-      base-url: http://127.0.0.1:1234/v1
-      model-name: ibm/granite-4-h-tiny
-      log-requests: true
-      log-responses: true
-      timeout: 20s
-      api-key: sk-lm-4LjIq0cR:VIueSQJU4lohBUvy7LUu
+#langchain4j:
+#  open-ai:
+#    chat-model:
+#      base-url: https://models.inference.ai.azure.com
+#      model-name: gpt-5-nano
+#      log-requests: true
+#      log-responses: true
+#      timeout: 3000s
+#      supported-capabilities: response_format_json_schema
+#      strict-json-schema: true
+#    streaming-chat-model:
+#      base-url: https://models.inference.ai.azure.com
+#      model-name: gpt-5-nano
+#      log-requests: true
+#      log-responses: true
+#      timeout: 3000s
 
 # Application Configuration
+
 spring:
+  profiles:
+    active: github
   application:
     name: codeprompt-framework
   main:
+    allow-bean-definition-overriding: true
     banner-mode: off
     web-application-type: none
 logging:

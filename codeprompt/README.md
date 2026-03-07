@@ -134,6 +134,87 @@ Add to `~/.jetbrains/acp.json`:
 3. Choose "Code Prompt Framework"
 4. Start chatting!
 
+## Testing Configuration
+
+The project uses different LLM providers for local development and CI:
+
+### Local Development (Default)
+
+By default, tests use **LM Studio** running on `localhost:1234`:
+
+```yaml
+# application.yaml (default configuration)
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: http://127.0.0.1:1234/v1
+      model-name: ibm/granite-4-h-tiny
+```
+
+**Setup LM Studio for local testing:**
+
+1. Download and install [LM Studio](https://lmstudio.ai/)
+2. Download a compatible model (e.g., `ibm/granite-4-h-tiny`)
+3. Start the local server on port 1234
+4. Run tests normally:
+   ```bash
+   ./gradlew test
+   ```
+
+### CI/GitHub Actions
+
+CI uses **GitHub Models** via Azure AI:
+
+```yaml
+# application-github.yaml
+langchain4j:
+  open-ai:
+    chat-model:
+      base-url: https://models.inference.ai.azure.com
+      model-name: gpt-5-nano
+```
+
+**GitHub Actions automatically:**
+- Activates the `github` profile with `-Dspring.profiles.active=github`
+- Uses the `MODEL_TOKEN` secret for authentication
+- No manual setup required
+
+**To test with GitHub models locally:**
+```bash
+export MODEL_TOKEN=your-github-token
+./gradlew test -Dspring.profiles.active=github
+```
+
+### Profile Selection
+
+The framework uses Spring profiles to switch between configurations:
+
+| Environment | Profile | Provider | Configuration |
+|-------------|---------|----------|---------------|
+| Local tests (default) | none | LM Studio | `application.yaml` |
+| CI/GitHub Actions | `github` | GitHub Models | `application-github.yaml` |
+| Custom | `testcontainers` | Ollama | `application-testcontainers.yaml` |
+
+**No code changes needed** - just set the profile:
+```bash
+# Local with LM Studio (default)
+./gradlew test
+
+# Local with GitHub Models
+./gradlew test -Dspring.profiles.active=github
+
+# CI (automatically set)
+# -Dspring.profiles.active=github is set in ci.yml
+```
+
+### Secrets Configuration
+
+For CI to work, ensure the `MODEL_TOKEN` secret is set in your GitHub repository:
+
+1. Go to repository Settings → Secrets and variables → Actions
+2. Add a new secret named `MODEL_TOKEN`
+3. Set the value to your GitHub Models API token
+
 ## API Examples
 
 ### Initialize Connection
