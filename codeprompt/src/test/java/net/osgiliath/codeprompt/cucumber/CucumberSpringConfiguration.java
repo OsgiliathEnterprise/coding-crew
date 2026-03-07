@@ -29,11 +29,6 @@ public class CucumberSpringConfiguration {
     @MockitoBean
     private CommandLineRunner commandLineRunner;
 
-    /**
-     * Mock MarkdownParser to keep cucumber tests focused on API/step behavior.
-     */
-    @MockitoBean
-    private MarkdownParser markdownParser;
 
     /**
      * Provide a mock AcpAgentSupportBridge bean for testing.

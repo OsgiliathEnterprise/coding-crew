@@ -9,21 +9,29 @@ import net.osgiliath.codeprompt.utils.markdown.MarkdownFile;
 import net.osgiliath.codeprompt.utils.markdown.MarkdownHeaders;
 import net.osgiliath.codeprompt.utils.markdown.MarkdownParser;
 import net.osgiliath.codeprompt.utils.markdown.MarkdownSection;
+import org.commonmark.ext.autolink.AutolinkExtension;
+import org.commonmark.ext.gfm.tables.TablesExtension;
+import org.commonmark.ext.ins.InsExtension;
+import org.commonmark.ext.task.list.items.TaskListItemsExtension;
+import org.commonmark.node.AbstractVisitor;
+import org.commonmark.node.Link;
+import org.commonmark.node.Node;
+import org.commonmark.parser.Parser;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.ArrayDeque;
 import java.util.ArrayList;
+import java.util.Deque;
 import java.util.HashSet;
 import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.Set;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -32,7 +40,7 @@ import static org.assertj.core.api.Assertions.assertThat;
  */
 public class MarkdownParsingSteps {
 
-    private static final Pattern LINK_PATTERN = Pattern.compile("\\[[^\\]]+\\]\\(([^)]+)\\)");
+    private final Parser commonMarkParser;
 
     @SuppressWarnings("SpringJavaInjectionPointsAutowiringInspection")
     @Autowired
@@ -53,6 +61,17 @@ public class MarkdownParsingSteps {
     private boolean circularReferencesDetected;
     private final List<String> processedFiles = new ArrayList<>();
     private Throwable stepError;
+
+    public MarkdownParsingSteps() {
+        this.commonMarkParser = Parser.builder()
+            .extensions(List.of(
+                TablesExtension.create(),
+                TaskListItemsExtension.create(),
+                AutolinkExtension.create(),
+                InsExtension.create()
+            ))
+            .build();
+    }
 
     @Before
     public void resetScenarioState() {
@@ -133,8 +152,9 @@ public class MarkdownParsingSteps {
     @When("I parse the headers of the markdown file")
     public void iParseTheHeadersOfTheMarkdownFile() {
         safely(() -> {
-            markdownFile = markdownParser.getMarkdownFile(currentFolder, currentFileName);
-            parsedHeaders = markdownParser.getHeaders();
+            Optional<MarkdownFile> file = markdownParser.getMarkdownFile(currentFolder, currentFileName);
+            markdownFile = file.orElse(null);
+            parsedHeaders = markdownParser.getHeaders(markdownFile).orElse(null);
         });
     }
 
@@ -153,8 +173,9 @@ public class MarkdownParsingSteps {
     @When("I parse the {string} section of the markdown file")
     public void iParseTheSectionOfTheMarkdownFile(String sectionName) {
         safely(() -> {
-            markdownFile = markdownParser.getMarkdownFile(currentFolder, currentFileName);
-            parsedSection = markdownParser.getSection(sectionName);
+            Optional<MarkdownFile> file = markdownParser.getMarkdownFile(currentFolder, currentFileName);
+            markdownFile = file.orElse(null);
+            parsedSection = markdownParser.getSection(markdownFile, sectionName).orElse(null);
         });
     }
 
@@ -183,9 +204,10 @@ public class MarkdownParsingSteps {
     @When("I parse the {string} section using the specific samples parser")
     public void iParseTheSectionUsingTheSpecificSamplesParser(String sectionName) {
         safely(() -> {
-            markdownFile = markdownParser.getMarkdownFile(currentFolder, currentFileName);
-            parsedSection = markdownParser.getSection(sectionName);
-            parsedSampleSections = safeList(markdownParser.getSampleSections());
+            Optional<MarkdownFile> file = markdownParser.getMarkdownFile(currentFolder, currentFileName);
+            markdownFile = file.orElse(null);
+            parsedSection = markdownParser.getSection(markdownFile, sectionName).orElse(null);
+            parsedSampleSections = safeList(markdownParser.getSampleSections(markdownFile));
         });
     }
 
@@ -227,10 +249,12 @@ public class MarkdownParsingSteps {
     @When("I follow and consolidate all markdown links")
     public void iFollowAndConsolidateAllMarkdownLinks() {
         safely(() -> {
-            markdownFile = markdownParser.getMarkdownFile(currentFolder, currentFileName);
+            Optional<MarkdownFile> file = markdownParser.getMarkdownFile(currentFolder, currentFileName);
+            markdownFile = file.orElse(null);
             String markdownSource = readCurrentMarkdownSource();
             classifiedLinks(markdownSource);
             consolidatedContent = extractConsolidatedContent(markdownFile);
+            circularReferencesDetected = detectCircularReferences();
         });
     }
 
@@ -372,16 +396,23 @@ public class MarkdownParsingSteps {
         if (markdownSource == null || markdownSource.isBlank()) {
             return;
         }
-        Matcher matcher = LINK_PATTERN.matcher(markdownSource);
-        while (matcher.find()) {
-            String link = matcher.group(1);
-            identifiedLinks.add(link);
-            if (link.startsWith("http://") || link.startsWith("https://")) {
-                externalLinks.add(link);
-            } else {
-                internalLinks.add(link);
+
+        Node document = commonMarkParser.parse(markdownSource);
+        document.accept(new AbstractVisitor() {
+            @Override
+            public void visit(Link link) {
+                String destination = link.getDestination();
+                if (destination != null) {
+                    identifiedLinks.add(destination);
+                    if (destination.startsWith("http://") || destination.startsWith("https://")) {
+                        externalLinks.add(destination);
+                    } else {
+                        internalLinks.add(destination);
+                    }
+                }
+                visitChildren(link);
             }
-        }
+        });
     }
 
     private String extractConsolidatedContent(MarkdownFile maybeMarkdownFile) {
@@ -423,6 +454,71 @@ public class MarkdownParsingSteps {
             return fileName;
         }
         return fileName.substring(0, separator);
+    }
+
+    private boolean detectCircularReferences() {
+        if (currentFileName == null || currentFileName.isBlank()) {
+            return false;
+        }
+        Path source = currentFolder.resolve(currentFileName);
+        if (!Files.exists(source)) {
+            Path datasetCandidate = datasetRoot.resolve(currentFileName);
+            if (Files.exists(datasetCandidate)) {
+                source = datasetCandidate;
+            }
+        }
+        if (!Files.exists(source)) {
+            return false;
+        }
+
+        return detectCircularReferences(source.normalize().toAbsolutePath(), new HashSet<>(), new ArrayDeque<>());
+    }
+
+    private boolean detectCircularReferences(Path file, Set<Path> visited, Deque<Path> stack) {
+        if (stack.contains(file)) {
+            return true;
+        }
+        if (!visited.add(file)) {
+            return false;
+        }
+
+        stack.push(file);
+        String source;
+        try {
+            source = Files.readString(file);
+        } catch (IOException e) {
+            stack.pop();
+            return false;
+        }
+
+        Node document = commonMarkParser.parse(source);
+        List<String> links = new ArrayList<>();
+        document.accept(new AbstractVisitor() {
+            @Override
+            public void visit(Link link) {
+                String destination = link.getDestination();
+                if (destination != null &&
+                    !destination.startsWith("http://") &&
+                    !destination.startsWith("https://")) {
+                    links.add(destination);
+                }
+                visitChildren(link);
+            }
+        });
+
+        for (String link : links) {
+            String resolvedLink = link.split("#", 2)[0].trim();
+            if (resolvedLink.isBlank()) {
+                continue;
+            }
+            Path next = file.getParent().resolve(resolvedLink).normalize().toAbsolutePath();
+            if (Files.exists(next) && Files.isRegularFile(next)
+                && detectCircularReferences(next, visited, stack)) {
+                return true;
+            }
+        }
+        stack.pop();
+        return false;
     }
 
     @FunctionalInterface

@@ -91,5 +91,4 @@ public class LangChain4jConfig {
                 .filter((client, spec) -> false) // filter out all tools, effectively disabling tool usage
         .build();
     }
-
 }

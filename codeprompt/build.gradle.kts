@@ -11,6 +11,7 @@ plugins {
 // Override Spring Boot's JUnit version to match Cucumber 7.34.2 requirements
 ext {
     set("junit-jupiter.version", "5.14.2")
+    set("commonmark.version", "0.27.1")
 }
 
 // Explicitly configure Java toolchain for this module to ensure consistency
@@ -81,6 +82,14 @@ dependencies {
     // LangGraph4j (Agent State Management)
     implementation("org.bsc.langgraph4j:langgraph4j-core")
     implementation("org.bsc.langgraph4j:langgraph4j-langchain4j")
+
+    // CommonMark markdown parsing library with extensions
+    implementation("org.commonmark:commonmark:${property("commonmark.version")}")
+    implementation("org.commonmark:commonmark-ext-task-list-items:${property("commonmark.version")}")
+    implementation("org.commonmark:commonmark-ext-yaml-front-matter:${property("commonmark.version")}")
+    implementation("org.commonmark:commonmark-ext-autolink:${property("commonmark.version")}")
+    implementation("org.commonmark:commonmark-ext-gfm-tables:${property("commonmark.version")}")
+    implementation("org.commonmark:commonmark-ext-ins:${property("commonmark.version")}")
 
     // Spring Boot
     implementation("org.springframework.boot:spring-boot-starter")
