@@ -6,8 +6,6 @@ import dev.langchain4j.model.chat.Capability;
 import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openaiofficial.OpenAiOfficialChatModel;
 import dev.langchain4j.model.openaiofficial.OpenAiOfficialStreamingChatModel;
-import org.springframework.beans.factory.ObjectProvider;
-import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
@@ -24,7 +22,7 @@ import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
  * Provides custom OpenAI Official API beans configured for GitHub Models
  * with strict tool support.
  */
-@TestConfiguration
+@Configuration
 @Profile("github")
 public class GitHubModelConfiguration {
 
