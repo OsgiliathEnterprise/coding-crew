@@ -30,7 +30,8 @@ jobs:
       - name: Run tests
         env:
           MODEL_TOKEN: ${{ secrets.MODEL_TOKEN }}
-        run: ./gradlew test --stacktrace -Dspring.profiles.active=github
+          SPRING_PROFILES_ACTIVE: github
+        run: ./gradlew test --stacktrace
 
       - name: Upload test results
         if: always()
