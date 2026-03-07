@@ -2,6 +2,8 @@ package net.osgiliath.codeprompt.configuration;
 
 
 import com.openai.models.ChatModel;
+import dev.langchain4j.mcp.McpToolProvider;
+import dev.langchain4j.mcp.client.McpClient;
 import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
 import dev.langchain4j.model.chat.Capability;
@@ -13,9 +15,12 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.context.annotation.Profile;
 
 import java.util.HashSet;
+import java.util.List;
 import java.util.Set;
 
 import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
+import static net.osgiliath.codeprompt.configuration.LangChain4jConfig.TOOL_PROVIDER_FULL;
+import static net.osgiliath.codeprompt.configuration.LangChain4jConfig.TOOL_PROVIDER_NONE;
 import static org.mockito.Mockito.mock;
 
 /**
@@ -35,7 +40,7 @@ public class GitHubModelConfiguration {
         capabilities.add(RESPONSE_FORMAT_JSON_SCHEMA);
         return OpenAiOfficialChatModel.builder()
                 .baseUrl("https://models.inference.ai.azure.com")
-                .modelName(ChatModel.GPT_5_NANO)
+                .modelName("openai/"+ChatModel.GPT_5_NANO)
                 .isGitHubModels(true)
                 .apiKey(System.getenv("MODEL_TOKEN"))
                 .strictJsonSchema(true)
@@ -48,19 +53,26 @@ public class GitHubModelConfiguration {
     public OpenAiOfficialStreamingChatModel streamingModel() {
         return OpenAiOfficialStreamingChatModel.builder()
                 .baseUrl("https://models.inference.ai.azure.com")
-                .modelName(ChatModel.GPT_5_NANO)
+                .modelName("openai/"+ChatModel.GPT_5_NANO)
                 .isGitHubModels(true)
                 .apiKey(System.getenv("MODEL_TOKEN"))
         .strictTools(true)
         .build();
     }
-
-        @Bean
-        @Primary
-    public McpTransport dockerGatewayMcpTransport() {
-        // Mock transport for CI/test profile to avoid requiring docker mcp gateway.
-        return mock(McpTransport.class);
+ @Bean(TOOL_PROVIDER_FULL)
+    public McpToolProvider toolProviderFull() {
+        return McpToolProvider.builder()
+        .mcpClients(List.of())
+        .build();
     }
 
+
+    @Bean(TOOL_PROVIDER_NONE)
+    @Primary
+    public McpToolProvider toolProviderNo() {
+        return McpToolProvider.builder()
+        .mcpClients(List.of())
+        .build();
+    }
 
 }

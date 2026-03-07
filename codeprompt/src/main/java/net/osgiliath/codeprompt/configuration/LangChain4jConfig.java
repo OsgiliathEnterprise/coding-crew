@@ -27,6 +27,7 @@ import java.util.Map;
  * The langchain4j-spring-boot-starter will automatically detect this bean and use it when creating OpenAI (and other) chat models.
  */
 @Configuration
+@Profile("!github") // Only apply this configuration when the 'github' profile is NOT active
 public class LangChain4jConfig {
     public static final String TOOL_PROVIDER_NONE = "toolProvider";
     private static final String CHAT_MODEL_HTTP_CLIENT_BUILDER = "openAiChatModelHttpClientBuilder";
