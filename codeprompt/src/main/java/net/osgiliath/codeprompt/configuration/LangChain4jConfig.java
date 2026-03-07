@@ -5,6 +5,7 @@ import dev.langchain4j.http.client.jdk.JdkHttpClient;
 import dev.langchain4j.mcp.McpToolProvider;
 import dev.langchain4j.mcp.client.DefaultMcpClient;
 import dev.langchain4j.mcp.client.McpClient;
+import dev.langchain4j.mcp.client.transport.McpTransport;
 import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
 import org.springframework.beans.factory.ObjectProvider;
 import org.springframework.context.annotation.Bean;
@@ -30,7 +31,7 @@ public class LangChain4jConfig {
     public static final String TOOL_PROVIDER_NONE = "toolProvider";
     private static final String CHAT_MODEL_HTTP_CLIENT_BUILDER = "openAiChatModelHttpClientBuilder";
     private static final String STREAMING_CHAT_MODEL_HTTP_CLIENT_BUILDER = "openAiStreamingChatModelHttpClientBuilder";
-    private static final String TOOL_PROVIDER_FULL = "allTools";
+    public static final String TOOL_PROVIDER_FULL = "allTools";
 
     /**
      * Configures a JdkHttpClientBuilder that uses HTTP/1.1.
@@ -59,7 +60,7 @@ public class LangChain4jConfig {
     }
 
     @Bean
-    public StdioMcpTransport dockerGatewayMcpTransport() {
+    public McpTransport dockerGatewayMcpTransport() {
         return StdioMcpTransport.builder()
             .command(List.of("docker", "mcp", "gateway", "run"))
                 .environment(Map.of("PATH", "/opt/homebrew/bin"))
@@ -68,7 +69,7 @@ public class LangChain4jConfig {
     }
 
     @Bean
-    public McpClient mcpClient(StdioMcpTransport gatewayMcpTransport) {
+    public McpClient mcpClient(McpTransport gatewayMcpTransport) {
         return DefaultMcpClient.builder()
                 .key("GatewayClient")
             .transport(gatewayMcpTransport)

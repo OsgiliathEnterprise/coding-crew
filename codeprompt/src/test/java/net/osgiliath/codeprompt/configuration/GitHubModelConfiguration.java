@@ -2,8 +2,9 @@ package net.osgiliath.codeprompt.configuration;
 
 
 import com.openai.models.ChatModel;
+import dev.langchain4j.mcp.client.transport.McpTransport;
+import dev.langchain4j.mcp.client.transport.stdio.StdioMcpTransport;
 import dev.langchain4j.model.chat.Capability;
-import dev.langchain4j.model.chat.StreamingChatModel;
 import dev.langchain4j.model.openaiofficial.OpenAiOfficialChatModel;
 import dev.langchain4j.model.openaiofficial.OpenAiOfficialStreamingChatModel;
 import org.springframework.context.annotation.Bean;
@@ -15,6 +16,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 import static dev.langchain4j.model.chat.Capability.RESPONSE_FORMAT_JSON_SCHEMA;
+import static org.mockito.Mockito.mock;
 
 /**
  * Configuration for GitHub Models when the 'github' profile is active.
@@ -52,5 +54,13 @@ public class GitHubModelConfiguration {
         .strictTools(true)
         .build();
     }
-}
 
+        @Bean
+        @Primary
+    public McpTransport dockerGatewayMcpTransport() {
+        // Mock transport for CI/test profile to avoid requiring docker mcp gateway.
+        return mock(McpTransport.class);
+    }
+
+
+}
